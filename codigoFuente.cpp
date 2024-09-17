@@ -40,6 +40,43 @@ int* arregloValores = new int[459];
 
 unsigned int determinante = 0;
 
+void imprimirDatos(unsigned short int* frecuencia, int amp, int* promedio, unsigned int determinante, int contadorCruce, int idx){
+	
+  
+  		 lcd.setCursor(1,0);
+         lcd.print("Frecuencia: ");
+         lcd.setCursor(1,1);
+         lcd.print(*frecuencia);
+      	 delay(1500);
+         
+         lcd.setCursor(1,0);
+         lcd.print("Amplitud: ");
+         lcd.setCursor(1,1);
+         lcd.print(amp);
+      	 delay(1500);
+         lcd.clear();
+         lcd.setCursor(1,0);
+         lcd.print("Tipo de onda: ");
+         lcd.setCursor(1,1);
+            
+         
+         if (*promedio < -2 || *promedio > 2){
+         lcd.print("Desconocida");
+         }
+         else if(determinante >= 400 && *promedio == 0){
+         lcd.print("Cuadrada");
+         }
+         else if(determinante <= 2*(contadorCruce/2) && *promedio > -1 && *promedio < 1){
+         lcd.print("Triangular");
+         }
+         else if(determinante > 3*(contadorCruce/2) && determinante < idx-contadorCruce && *promedio > -1 && *promedio < 1){
+         lcd.print("Sinusoidal");
+         }
+
+
+}
+
+
 
 void setup()
 {
@@ -57,14 +94,6 @@ void loop()
  
   val = analogRead(analogpin);
   
-  
-  
-  
-  
-  
-  
-  
-
   if(buttonOn == HIGH){
   Encendido = true;
   } //buttonOn
@@ -79,6 +108,7 @@ void loop()
   
   
   if(Encendido){
+    Serial.println(val);
    
     if(val > valorMax){
     	valorMax = val;
@@ -91,6 +121,12 @@ void loop()
     amplitud = (valorMax - valorMin)/2;
     
       }//Encendido
+  
+  
+  
+  
+  
+  
   
   
   if(ciclo){
@@ -154,8 +190,6 @@ void loop()
            }  
            *media /= idx-1;
          }
-         delay(1000);
-         Serial.println("Fin de la revision");
          *frecuencia = contadorCruce;
          if(*frecuencia%2 == 0){
          	*frecuencia /= 2;
@@ -164,37 +198,9 @@ void loop()
          *frecuencia = (*frecuencia-1)/2;
          }
          
-         lcd.setCursor(1,0);
-         lcd.print("Frecuencia: ");
-         lcd.setCursor(1,1);
-         lcd.print(*frecuencia);
-      	 delay(1500);
+         imprimirDatos(frecuencia, amplitud, media, determinante, contadorCruce, idx);
          
-         lcd.setCursor(1,0);
-         lcd.print("Amplitud: ");
-         lcd.setCursor(1,1);
-         lcd.print(amplitud);
-      	 delay(1500);
-         lcd.clear();
-         lcd.setCursor(1,0);
-         lcd.print("Tipo de onda: ");
-         lcd.setCursor(1,1);
-            
          
-         if (*media < -2 || *media > 2){
-         lcd.print("Desconocida");
-         }
-         else if(determinante >= 400 && *media == 0){
-         lcd.print("Cuadrada");
-         }
-         else if(determinante <= 2*(contadorCruce/2) && *media > -1 && *media < 1){
-         lcd.print("Triangular");
-         }
-         else if(determinante > 3*(contadorCruce/2) && determinante < idx-contadorCruce && *media > -1 && *media < 1){
-         lcd.print("Sinusoidal");
-         }else{
-         lcd.print("Desconocida");
-         }
          delay(2000);
          lcd.clear();
             Encendido = false;   
@@ -208,6 +214,8 @@ void loop()
         	determinante = 0;
          	delete [] arregloValores;
          	delete tiempoInicial;
+         	valorMax = -1024;
+         	valorMin = 1024;
     }
       }
     
