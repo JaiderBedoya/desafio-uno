@@ -3,24 +3,30 @@
 Adafruit_LiquidCrystal lcd(0);
 
 int analogpin = 0;
+
 int buttonOn = LOW;
+
 int buttonOff = LOW;
-int val = 0;
+
+int val;
+
 int valorMax = -1024;
+
 int valorMin = 1024;
-int amplitud;
-int puntoMedio;
+
+unsigned int amplitud;
+
 bool Encendido;
+
 bool positivo = true;
+
 int contadorCruce = 0;
-unsigned short int cambios = 0;
-int contador;
 
 bool contando;
 
-unsigned short int frecuencia;
+unsigned short int* frecuencia = new unsigned short int(0);
 
-unsigned long tiempoInicial = 0;
+unsigned long* tiempoInicial = new unsigned long(0);
 
 const unsigned long segundo = 1000;
 
@@ -39,6 +45,7 @@ void setup()
 {
   lcd.begin(16, 2);
   pinMode(2, INPUT);
+  pinMode(3, INPUT);
   Serial.begin(9600);
 }
 
@@ -49,9 +56,18 @@ void loop()
   
  
   val = analogRead(analogpin);
+  
+  
+  
+  
+  
+  
+  
+  
 
   if(buttonOn == HIGH){
-  Encendido = true;} //buttonOn
+  Encendido = true;
+  } //buttonOn
   
   if(buttonOff == HIGH){
     ciclo = true;
@@ -59,7 +75,10 @@ void loop()
   }//buttonOff
   
   
-  if(Encendido){  
+  
+  
+  
+  if(Encendido){
    
     if(val > valorMax){
     	valorMax = val;
@@ -71,38 +90,42 @@ void loop()
     
     amplitud = (valorMax - valorMin)/2;
     
-    //puntoMedio = (valorMax + valorMin)/2;    
-     
       }//Encendido
-  
-  
-  
   
   
   if(ciclo){
     
     if(val== amplitud && !contando){
-      tiempoInicial = millis();
+      *tiempoInicial = millis();
       contando = true;
     }
       if(contando){
+        
+        
      arregloValores[idx] = analogRead(analogpin);
     idx++;
     delay(2);
-       if(millis() - tiempoInicial >= segundo){
-      Serial.println("Termino la recoleccion de datos...");
-      Serial.println(idx);
-    delay(8000);      
-         Serial.println("Imprimiendo datos tomados en un segundo");
+        
+        
+       if(millis() - *tiempoInicial >= segundo){ 
          
-         for(int j = 0; j <= idx;j++){
-         	Serial.println(arregloValores[j]); 
+         Serial.println("Imprimiendo valores guardados");
+         delay(2000);
+         
+         for(int j = 0; j < idx; j++){
+         Serial.println(arregloValores[j]);
          }
-         delay(8000);
+         
+         
+         int* media = new int(0);
+         
          
          for(int i = 0; i <= idx; i++){
            
+           media += arregloValores[i];    
+           
            if(i < idx){             
+             
              if(arregloValores[i] == arregloValores[i+1]){
              	determinante++;
              }
@@ -129,36 +152,62 @@ void loop()
            
            
            }  
+           *media /= idx-1;
          }
-         
-         frecuencia = contadorCruce;
-         Serial.println("La frecuencia es: ");
-         if(frecuencia%2 == 0){
-         	Serial.println(frecuencia/2);
-         }
-         else{
-         Serial.println((frecuencia-1)/2);
-         }
-         Serial.println("La amplitud es: ");
-         Serial.println(amplitud);
-         
-         if(determinante > contadorCruce){
-         Serial.println("Onda cuadrada");
-         }
-         else if(determinante == 0){
-         Serial.println("Onda triangular");
-         }
-         else if(determinante != 0 && determinante <= contadorCruce){
-         Serial.println("Onda Sinusoidal");
+         delay(1000);
+         Serial.println("Fin de la revision");
+         *frecuencia = contadorCruce;
+         if(*frecuencia%2 == 0){
+         	*frecuencia /= 2;
          }
          else{
-         Serial.println("Señal desconocida");
+         *frecuencia = (*frecuencia-1)/2;
          }
          
+         lcd.setCursor(1,0);
+         lcd.print("Frecuencia: ");
+         lcd.setCursor(1,1);
+         lcd.print(*frecuencia);
+      	 delay(1500);
          
+         lcd.setCursor(1,0);
+         lcd.print("Amplitud: ");
+         lcd.setCursor(1,1);
+         lcd.print(amplitud);
+      	 delay(1500);
+         lcd.clear();
+         lcd.setCursor(1,0);
+         lcd.print("Tipo de onda: ");
+         lcd.setCursor(1,1);
+            
          
-      contando = false;
-    	ciclo = false;
+         if (*media < -2 || *media > 2){
+         lcd.print("Desconocida");
+         }
+         else if(determinante >= 400 && *media == 0){
+         lcd.print("Cuadrada");
+         }
+         else if(determinante <= 2*(contadorCruce/2) && *media > -1 && *media < 1){
+         lcd.print("Triangular");
+         }
+         else if(determinante > 3*(contadorCruce/2) && determinante < idx-contadorCruce && *media > -1 && *media < 1){
+         lcd.print("Sinusoidal");
+         }else{
+         lcd.print("Desconocida");
+         }
+         delay(2000);
+         lcd.clear();
+            Encendido = false;   
+      		contando = false;
+    		ciclo = false;
+         	positivo = true;
+         	amplitud = -1024;
+            frecuencia = 0;
+         	contadorCruce = 0;
+         	delete media;
+        	determinante = 0;
+         	delete [] arregloValores;
+         	delete tiempoInicial;
     }
       }
     
